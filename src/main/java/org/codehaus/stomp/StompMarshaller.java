@@ -41,22 +41,33 @@ public class StompMarshaller {
         this.version = version;
     }
 
-    public byte[] marshal(StompFrame command) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(baos);
-        marshal(command, dos);
-        dos.close();
-        return baos.toByteArray();
+    public byte[] marshal(StompFrame command) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+            marshal(command, dos);
+            dos.close();
+            return baos.toByteArray();
+        } catch (IOException ex) {
+            //this is not suppoed to happen; programmer error!
+            throw new RuntimeException(ex);
+        }
     }
 
-    public StompFrame unmarshal(byte[] packet) throws IOException {
-        ByteArrayInputStream stream = new ByteArrayInputStream(packet);
-        DataInputStream dis = new DataInputStream(stream);
-        return unmarshal(dis);
+    public StompFrame unmarshal(byte[] packet) throws ProtocolException {
+        try {
+            ByteArrayInputStream stream = new ByteArrayInputStream(packet);
+            DataInputStream dis = new DataInputStream(stream);
+
+            return unmarshal(dis);
+        } catch (IOException ex) {
+            //this is not suppoed to happen; programmer error!
+            throw new RuntimeException(ex);
+        } 
     }
 
     public void marshal(StompFrame stomp, DataOutput os) throws IOException {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder(1024);
         buffer.append(stomp.getAction());
         buffer.append(Stomp.NEWLINE);
 

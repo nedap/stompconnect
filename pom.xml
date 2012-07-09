@@ -32,13 +32,7 @@
     <url>http://svn.codehaus.org/stomp/trunk/stompconnect</url>
   </scm>
 
-  <dependencies>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1</version>
-    </dependency>
-
+  <dependencies>   
     <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-core</artifactId>
@@ -51,27 +45,7 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
-  </dependencies>
-
-  <repositories>
-  </repositories>
-
-  <distributionManagement>
-    <repository>
-      <id>codehaus.org</id>
-      <name>Stomp Central Repository</name>
-      <url>dav:https://dav.codehaus.org/repository/stomp/</url>
-    </repository>
-    <snapshotRepository>
-      <id>codehaus.org</id>
-      <name>Stomp Central Development Repository</name>
-      <url>dav:https://dav.codehaus.org/snapshots.repository/stomp/</url>
-    </snapshotRepository>
-    <site>
-      <id>codehaus.org</id>
-      <url>dav:https://dav.codehaus.org/stomp/maven/</url>
-    </site>
-  </distributionManagement>
+  </dependencies> 
 
   <reporting>
     <plugins>
