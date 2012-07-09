@@ -17,7 +17,7 @@
  */
 package org.codehaus.stomp;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -28,14 +28,14 @@ import java.util.Map;
 public class StompFrame {
     private static final byte[] NO_DATA = new byte[]{};
     private String action;
-    private Map<String, Object> headers;
+    private Map<String, String> headers;
     private byte[] content = StompFrame.NO_DATA;
 
     public StompFrame() {
-        this.headers = new HashMap<String, Object>();
+        this.headers = new LinkedHashMap<String, String>();
     }
 
-    public StompFrame(String command, Map<String, Object> headers, byte[] data) {
+    public StompFrame(String command, Map<String, String> headers, byte[] data) {
         this.action = command;
         this.headers = headers;
         this.content = data;
@@ -57,11 +57,11 @@ public class StompFrame {
         this.content = data;
     }
 
-    public Map<String, Object> getHeaders() {
+    public Map<String, String> getHeaders() {
         return headers;
     }
 
-    public void setHeaders(Map<String, Object> headers) {
+    public void setHeaders(Map<String, String> headers) {
         this.headers = headers;
     }
 }

@@ -17,15 +17,8 @@
  */
 package org.codehaus.stomp;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.io.*;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -68,8 +61,7 @@ public class StompMarshaller {
         buffer.append(Stomp.NEWLINE);
 
         // Output the headers.
-        for (Iterator iter = stomp.getHeaders().entrySet().iterator(); iter.hasNext();) {
-            Map.Entry entry = (Map.Entry) iter.next();
+        for (Map.Entry<String, String> entry:stomp.getHeaders().entrySet()) {
             buffer.append(entry.getKey());
             buffer.append(Stomp.Headers.SEPERATOR);
             buffer.append(entry.getValue());
@@ -84,103 +76,97 @@ public class StompMarshaller {
         os.write(END_OF_FRAME);
     }
 
-    public StompFrame unmarshal(DataInput in) throws IOException {
+    public StompFrame unmarshal(DataInput in) throws IOException, ProtocolException {
+        String action = null;
 
-        try {
-            String action = null;
-
-            // skip white space to next real action line
-            while (true) {
-                action = readLine(in, MAX_COMMAND_LENGTH, "The maximum command length was exceeded");
-                if (action == null) {
-                    throw new IOException("connection was closed");
-                }
-                else {
-                    action = action.trim();
-                    if (action.length() > 0) {
-                        break;
-                    }
-                }
+        // skip white space to next real action line
+        while (true) {
+            action = readLine(in, MAX_COMMAND_LENGTH, "The maximum command length was exceeded");
+            if (action == null) {
+                throw new IOException("connection was closed");
             }
-
-            // Parse the headers
-            HashMap headers = new HashMap(25);
-            while (true) {
-                String line = readLine(in, MAX_HEADER_LENGTH, "The maximum header length was exceeded");
-                if (line != null && line.trim().length() > 0) {
-
-                    if (headers.size() > MAX_HEADERS) {
-                        throw new ProtocolException("The maximum number of headers was exceeded", true);
-                    }
-
-                    try {
-                        int seperator_index = line.indexOf(Stomp.Headers.SEPERATOR);
-                        String name = line.substring(0, seperator_index).trim();
-                        String value = line.substring(seperator_index + 1, line.length()).trim();
-                        headers.put(name, value);
-                    }
-                    catch (Exception e) {
-                        throw new ProtocolException("Unable to parser header line [" + line + "]", true);
-                    }
-                }
-                else {
+            else {
+                action = action.trim();
+                if (action.length() > 0) {
                     break;
                 }
             }
+        }
 
-            // Read in the data part.
-            byte[] data = NO_DATA;
-            String contentLength = (String) headers.get(Stomp.Headers.CONTENT_LENGTH);
-            if (contentLength != null) {
+        // Parse the headers
+        Map<String, String> headers = new LinkedHashMap<String, String>(10);
+        while (true) {
+            String line = readLine(in, MAX_HEADER_LENGTH, "The maximum header length was exceeded");
+            if (line != null && line.trim().length() > 0) {
 
-                // Bless the client, he's telling us how much data to read in.
-                int length;
+                if (headers.size() > MAX_HEADERS) {
+                    throw new ProtocolException("The maximum number of headers was exceeded", true);
+                }
+
                 try {
-                    length = Integer.parseInt(contentLength.trim());
+                    int seperator_index = line.indexOf(Stomp.Headers.SEPERATOR);
+                    String name = line.substring(0, seperator_index).trim();
+                    String value = line.substring(seperator_index + 1, line.length()).trim();
+                    headers.put(name, value);
                 }
-                catch (NumberFormatException e) {
-                    throw new ProtocolException("Specified content-length is not a valid integer", true);
-                }
-
-                if (length > MAX_DATA_LENGTH) {
-                    throw new ProtocolException("The maximum data length was exceeded", true);
-                }
-
-                data = new byte[length];
-                in.readFully(data);
-
-                if (in.readByte() != 0) {
-                    throw new ProtocolException(Stomp.Headers.CONTENT_LENGTH + " bytes were read and " + "there was no trailing null byte", true);
+                catch (Exception e) {
+                    throw new ProtocolException("Unable to parser header line [" + line + "]", true);
                 }
             }
             else {
+                break;
+            }
+        }
 
-                // We don't know how much to read.. data ends when we hit a 0
-                byte b;
-                ByteArrayOutputStream baos = null;
-                while ((b = in.readByte()) != 0) {
+        // Read in the data part.
+        byte[] data = NO_DATA;
+        String contentLength = (String) headers.get(Stomp.Headers.CONTENT_LENGTH);
+        if (contentLength != null) {
 
-                    if (baos == null) {
-                        baos = new ByteArrayOutputStream();
-                    }
-                    else if (baos.size() > MAX_DATA_LENGTH) {
-                        throw new ProtocolException("The maximum data length was exceeded", true);
-                    }
-
-                    baos.write(b);
-                }
-
-                if (baos != null) {
-                    baos.close();
-                    data = baos.toByteArray();
-                }
+            // Bless the client, he's telling us how much data to read in.
+            int length;
+            try {
+                length = Integer.parseInt(contentLength.trim());
+            }
+            catch (NumberFormatException e) {
+                throw new ProtocolException("Specified content-length is not a valid integer", true);
             }
 
-            return new StompFrame(action, headers, data);
+            if (length > MAX_DATA_LENGTH) {
+                throw new ProtocolException("The maximum data length was exceeded", true);
+            }
+
+            data = new byte[length];
+            in.readFully(data);
+
+            if (in.readByte() != 0) {
+                throw new ProtocolException(Stomp.Headers.CONTENT_LENGTH + " bytes were read and " + "there was no trailing null byte", true);
+            }
         }
-        catch (ProtocolException e) {
-            return new StompFrameError(e);
+        else {
+
+            // We don't know how much to read.. data ends when we hit a 0
+            byte b;
+            ByteArrayOutputStream baos = null;
+            while ((b = in.readByte()) != 0) {
+
+                if (baos == null) {
+                    baos = new ByteArrayOutputStream();
+                }
+                else if (baos.size() > MAX_DATA_LENGTH) {
+                    throw new ProtocolException("The maximum data length was exceeded", true);
+                }
+
+                baos.write(b);
+            }
+
+            if (baos != null) {
+                baos.close();
+                data = baos.toByteArray();
+            }
         }
+
+        return new StompFrame(action, headers, data);       
     }
 
     protected String readLine(DataInput in, int maxLength, String errorMessage) throws IOException {
