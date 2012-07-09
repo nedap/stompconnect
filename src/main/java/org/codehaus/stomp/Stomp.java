@@ -29,6 +29,7 @@ public interface Stomp {
 
     public static interface Commands {
         String CONNECT = "CONNECT";
+        String STOMP = "STOMP";
         String SEND = "SEND";
         String DISCONNECT = "DISCONNECT";
         String SUBSCRIBE = "SUB";
@@ -40,6 +41,7 @@ public interface Stomp {
         String COMMIT = "COMMIT";
         String ABORT = "ABORT";
         String ACK = "ACK";
+        String NACK = "NACK";
     }
 
     public interface Responses {
@@ -101,11 +103,14 @@ public interface Stomp {
             String ID = "id";
         }
 
+        //there should also be a Stomp interface, but Java won't let us do that
         public interface Connect {
             String LOGIN = "login";
             String PASSCODE = "passcode";
             String CLIENT_ID = "client-id";
             String REQUEST_ID = "request-id";
+            String ACCEPT_VERSION = "accept-version";
+            String HOST = "host";
         }
 
         public interface Error {
@@ -115,10 +120,20 @@ public interface Stomp {
         public interface Connected {
             String SESSION = "session";
             String RESPONSE_ID = "response-id";
+            String VERSION = "version";
+            String SERVER = "server";
         }
 
         public interface Ack {
             String MESSAGE_ID = "message-id";
+            String SUBSCRIPTION = "subscription";
+            String TRANSACTION = "transaction";
+        }
+
+        public interface Nack {
+            String MESSAGE_ID = "message-id";
+            String SUBSCRIPTION = "subscription";
+            String TRANSACTION = "transaction";
         }
     }
 }
