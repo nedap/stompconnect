@@ -56,7 +56,7 @@ public class StompMarshaller {
         return baos.toByteArray();
     }
 
-    public Object unmarshal(byte[] packet) throws IOException {
+    public StompFrame unmarshal(byte[] packet) throws IOException {
         ByteArrayInputStream stream = new ByteArrayInputStream(packet);
         DataInputStream dis = new DataInputStream(stream);
         return unmarshal(dis);
