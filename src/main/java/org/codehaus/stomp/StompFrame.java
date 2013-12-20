@@ -64,4 +64,10 @@ public class StompFrame {
     public void setHeaders(Map<String, String> headers) {
         this.headers = headers;
     }
+
+    @Override
+    public String toString() {
+        return String.format("StompFrame [action=%s, headers=%s]", action, headers);
+    }
+
 }
