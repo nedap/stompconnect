@@ -17,7 +17,13 @@
  */
 package org.codehaus.stomp;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -25,8 +31,8 @@ import java.util.Map;
  * Implements marshalling and unmarsalling the <a href="http://stomp.codehaus.org/">Stomp</a> protocol.
  */
 public class StompMarshaller {
-    private static final byte[] NO_DATA = new byte[]{};
-    private static final byte[] END_OF_FRAME = new byte[]{0, '\n'};
+    private static final byte[] NO_DATA = new byte[] {};
+    private static final byte[] END_OF_FRAME = new byte[] { 0, '\n' };
     private static final int MAX_COMMAND_LENGTH = 1024;
     private static final int MAX_HEADER_LENGTH = 1024 * 10;
     private static final int MAX_HEADERS = 1000;
@@ -49,7 +55,7 @@ public class StompMarshaller {
             dos.close();
             return baos.toByteArray();
         } catch (IOException ex) {
-            //this is not suppoed to happen; programmer error!
+            // this is not supposed to happen; programmer error!
             throw new RuntimeException(ex);
         }
     }
@@ -61,9 +67,9 @@ public class StompMarshaller {
 
             return unmarshal(dis);
         } catch (IOException ex) {
-            //this is not suppoed to happen; programmer error!
+            // this is not supposed to happen; programmer error!
             throw new RuntimeException(ex);
-        } 
+        }
     }
 
     public void marshal(StompFrame stomp, DataOutput os) throws IOException {
@@ -72,14 +78,14 @@ public class StompMarshaller {
         buffer.append(Stomp.NEWLINE);
 
         // Output the headers.
-        for (Map.Entry<String, String> entry:stomp.getHeaders().entrySet()) {
+        for (Map.Entry<String, String> entry : stomp.getHeaders().entrySet()) {
             buffer.append(entry.getKey());
-            buffer.append(Stomp.Headers.SEPERATOR);
+            buffer.append(Stomp.Headers.SEPARATOR);
             buffer.append(entry.getValue());
             buffer.append(Stomp.NEWLINE);
         }
 
-        // Add a newline to seperate the headers from the content.
+        // Add a newline to separate the headers from the content.
         buffer.append(Stomp.NEWLINE);
 
         os.write(buffer.toString().getBytes("UTF-8"));
@@ -95,8 +101,7 @@ public class StompMarshaller {
             action = readLine(in, MAX_COMMAND_LENGTH, "The maximum command length was exceeded");
             if (action == null) {
                 throw new IOException("connection was closed");
-            }
-            else {
+            } else {
                 action = action.trim();
                 if (action.length() > 0) {
                     break;
@@ -115,31 +120,28 @@ public class StompMarshaller {
                 }
 
                 try {
-                    int seperator_index = line.indexOf(Stomp.Headers.SEPERATOR);
+                    int seperator_index = line.indexOf(Stomp.Headers.SEPARATOR);
                     String name = line.substring(0, seperator_index).trim();
                     String value = line.substring(seperator_index + 1, line.length()).trim();
                     headers.put(name, value);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new ProtocolException("Unable to parser header line [" + line + "]", true);
                 }
-            }
-            else {
+            } else {
                 break;
             }
         }
 
         // Read in the data part.
         byte[] data = NO_DATA;
-        String contentLength = (String) headers.get(Stomp.Headers.CONTENT_LENGTH);
+        String contentLength = headers.get(Stomp.Headers.CONTENT_LENGTH);
         if (contentLength != null) {
 
             // Bless the client, he's telling us how much data to read in.
             int length;
             try {
                 length = Integer.parseInt(contentLength.trim());
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 throw new ProtocolException("Specified content-length is not a valid integer", true);
             }
 
@@ -151,10 +153,10 @@ public class StompMarshaller {
             in.readFully(data);
 
             if (in.readByte() != 0) {
-                throw new ProtocolException(Stomp.Headers.CONTENT_LENGTH + " bytes were read and " + "there was no trailing null byte", true);
+                throw new ProtocolException(Stomp.Headers.CONTENT_LENGTH + " bytes were read and "
+                        + "there was no trailing null byte", true);
             }
-        }
-        else {
+        } else {
 
             // We don't know how much to read.. data ends when we hit a 0
             byte b;
@@ -163,8 +165,7 @@ public class StompMarshaller {
 
                 if (baos == null) {
                     baos = new ByteArrayOutputStream();
-                }
-                else if (baos.size() > MAX_DATA_LENGTH) {
+                } else if (baos.size() > MAX_DATA_LENGTH) {
                     throw new ProtocolException("The maximum data length was exceeded", true);
                 }
 
@@ -177,7 +178,7 @@ public class StompMarshaller {
             }
         }
 
-        return new StompFrame(action, headers, data);       
+        return new StompFrame(action, headers, data);
     }
 
     protected String readLine(DataInput in, int maxLength, String errorMessage) throws IOException {

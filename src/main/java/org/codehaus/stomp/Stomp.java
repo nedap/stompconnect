@@ -32,8 +32,10 @@ public interface Stomp {
         String STOMP = "STOMP";
         String SEND = "SEND";
         String DISCONNECT = "DISCONNECT";
-        String SUBSCRIBE = "SUB";
-        String UNSUBSCRIBE = "UNSUB";
+        String SUBSCRIBE = "SUBSCRIBE";
+        String UNSUBSCRIBE = "UNSUBSCRIBE";
+        String SUB = "SUB";
+        String UNSUB = "UNSUB";
         String BEGIN_TRANSACTION = "BEGIN";
         String COMMIT_TRANSACTION = "COMMIT";
         String ABORT_TRANSACTION = "ABORT";
@@ -52,7 +54,7 @@ public interface Stomp {
     }
 
     public interface Headers {
-        String SEPERATOR = ":";
+        String SEPARATOR = ":";
         String RECEIPT_REQUESTED = "receipt";
         String TRANSACTION = "transaction";
         String CONTENT_LENGTH = "content-length";
